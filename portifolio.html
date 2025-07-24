@@ -1,0 +1,919 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Your Name - Interactive Portfolio</title>
+    
+    <script src="https://cdn.tailwindcss.com"></script>
+    
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+
+    <style>
+        :root {
+        --primary-color: #4f46e5;
+        --secondary-color: #10b981;
+        --dark-bg: #111827;
+        --light-bg: #f9fafb;
+        --text-light: #f3f4f6;
+        --text-dark: #1f2937;
+    }
+
+    html {
+        scroll-behavior: smooth;
+    }
+
+    body {
+        font-family: 'Poppins', sans-serif;
+        background-color: var(--dark-bg);
+        color: var(--text-light);
+        overflow-x: hidden;
+    }
+
+    ::-webkit-scrollbar {
+        width: 8px;
+    }
+    ::-webkit-scrollbar-track {
+        background: #1f2937;
+    }
+    ::-webkit-scrollbar-thumb {
+        background: var(--primary-color);
+        border-radius: 10px;
+    }
+    ::-webkit-scrollbar-thumb:hover {
+        background: #6366f1;
+    }
+
+    .section-header {
+        font-size: 3rem;
+        font-weight: 700;
+        margin-bottom: 1rem;
+        text-align: center;
+        background: linear-gradient(90deg, var(--primary-color), var(--secondary-color));
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+        background-clip: text;
+    }
+    .section-subheader {
+        text-align: center;
+        color: #d1d5db;
+        margin-bottom: 3rem;
+        max-width: 600px;
+        margin-left: auto;
+        margin-right: auto;
+    }
+
+    .glass-card {
+        background: rgba(31, 41, 55, 0.5);
+        backdrop-filter: blur(10px);
+        -webkit-backdrop-filter: blur(10px);
+        border: 1px solid rgba(255, 255, 255, 0.1);
+        border-radius: 1rem;
+        transition: all 0.3s ease;
+    }
+    .glass-card:hover {
+        transform: translateY(-5px);
+        box-shadow: 0 10px 20px rgba(0, 0, 0, 0.2);
+        border-color: rgba(79, 70, 229, 0.5);
+    }
+
+    #game-container {
+        position: relative;
+        width: 100%;
+        max-width: 1000px;
+        aspect-ratio: 16 / 9;
+        margin: auto;
+        border-radius: 1rem;
+        overflow: hidden;
+        border: 2px solid var(--primary-color);
+        box-shadow: 0 0 30px rgba(79, 70, 229, 0.5);
+    }
+
+    #game-canvas {
+        display: block;
+        width: 100%;
+        height: 100%;
+        background-color: #000;
+    }
+
+    #game-ui {
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        color: white;
+        pointer-events: none;
+        display: flex;
+        flex-direction: column;
+        justify-content: space-between;
+        padding: 20px;
+        font-size: 1.25rem;
+    }
+    #game-start-screen, #game-over-screen {
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background: rgba(0, 0, 0, 0.7);
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+        align-items: center;
+        text-align: center;
+        pointer-events: all;
+        z-index: 10;
+    }
+    .game-button {
+        padding: 12px 24px;
+        background-color: var(--primary-color);
+        color: white;
+        border: none;
+        border-radius: 8px;
+        font-size: 1.2rem;
+        font-weight: 600;
+        cursor: pointer;
+        transition: all 0.2s ease;
+        margin-top: 20px;
+    }
+    .game-button:hover {
+        background-color: #6366f1;
+        transform: scale(1.05);
+    }
+
+    nav {
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        z-index: 50;
+        background: rgba(17, 24, 39, 0.8);
+        backdrop-filter: blur(10px);
+        -webkit-backdrop-filter: blur(10px);
+        transition: all 0.3s ease;
+    }
+    nav.scrolled {
+        box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+    }
+
+    .btn-primary {
+        background-color: var(--primary-color);
+        transition: background-color 0.3s ease;
+    }
+    .btn-primary:hover {
+        background-color: #6366f1;
+    }
+
+    #setup-modal-backdrop {
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100vw;
+        height: 100vh;
+        background-color: rgba(0,0,0,0.7);
+        z-index: 100;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        opacity: 0;
+        pointer-events: none;
+        transition: opacity 0.3s ease;
+    }
+    #setup-modal-backdrop.visible {
+        opacity: 1;
+        pointer-events: all;
+    }
+    #setup-modal {
+        background-color: var(--dark-bg);
+        border: 1px solid rgba(255, 255, 255, 0.1);
+        border-radius: 1rem;
+        padding: 2rem;
+        width: 90%;
+        max-width: 600px;
+        transform: scale(0.95);
+        transition: transform 0.3s ease;
+    }
+    #setup-modal-backdrop.visible #setup-modal {
+        transform: scale(1);
+    }
+    .modal-step {
+        display: none;
+    }
+    .modal-step.active {
+        display: block;
+    }
+    .form-input {
+        width: 100%;
+        padding: 0.75rem;
+        background-color: #1f2937;
+        border: 1px solid #4b5563;
+        border-radius: 0.5rem;
+        color: white;
+        margin-top: 0.5rem;
+    }
+    .form-input:focus {
+        outline: none;
+        border-color: var(--primary-color);
+    }
+    .progress-bar-container {
+        width: 100%;
+        background-color: #374151;
+        border-radius: 9999px;
+        height: 8px;
+        margin-bottom: 1.5rem;
+    }
+    #progress-bar {
+        height: 100%;
+        background-color: var(--primary-color);
+        border-radius: 9999px;
+        width: 0%;
+        transition: width 0.3s ease;
+    }
+    </style>
+</head>
+<body class="bg-gray-900">
+
+    <div id="setup-modal-backdrop">
+        <div id="setup-modal">
+            <h2 class="text-2xl font-bold mb-2">Personalize Your Portfolio</h2>
+            <p class="text-gray-400 mb-6">Let's set up your interactive space in just a few steps.</p>
+            
+            <div class="progress-bar-container">
+                <div id="progress-bar"></div>
+            </div>
+
+            <form id="portfolio-setup-form">
+                <div id="step-1" class="modal-step">
+                    <h3 class="text-xl font-semibold mb-4">Step 1: Your Identity</h3>
+                    <label class="block text-gray-300">Full Name</label>
+                    <input type="text" id="input-name" class="form-input" placeholder="e.g., Jane Doe" required>
+                    <label class="block text-gray-300 mt-4">Professional Title</label>
+                    <input type="text" id="input-title" class="form-input" placeholder="e.g., Full-Stack Developer" required>
+                </div>
+
+                <div id="step-2" class="modal-step">
+                    <h3 class="text-xl font-semibold mb-4">Step 2: Your Story</h3>
+                    <label class="block text-gray-300">Short Bio</label>
+                    <textarea id="input-bio" class="form-input" rows="4" placeholder="Tell us a bit about yourself..."></textarea>
+                    <label class="block text-gray-300 mt-4">College/University</label>
+                    <input type="text" id="input-college" class="form-input" placeholder="e.g., University of Technology">
+                </div>
+                
+                <div id="step-3" class="modal-step">
+                    <h3 class="text-xl font-semibold mb-4">Step 3: Your Tech Stack</h3>
+                    <label class="block text-gray-300">Enter your skills (comma-separated)</label>
+                    <input type="text" id="input-skills" class="form-input" placeholder="e.g., JavaScript, React, Node.js, Python" required>
+                    <p class="text-sm text-gray-500 mt-2">These will become the asteroids in the game!</p>
+                </div>
+                
+                <div id="step-4" class="modal-step">
+                    <h3 class="text-xl font-semibold mb-4">Step 4: Your Work</h3>
+                    <p class="text-gray-400 mb-4">Describe one of your key projects.</p>
+                    <label class="block text-gray-300">Project Title</label>
+                    <input type="text" id="input-project-title" class="form-input" placeholder="e.g., E-Commerce Platform">
+                    <label class="block text-gray-300 mt-4">Project Description</label>
+                    <textarea id="input-project-desc" class="form-input" rows="3" placeholder="A short description of the project..."></textarea>
+                </div>
+                
+                <div id="step-5" class="modal-step">
+                    <h3 class="text-xl font-semibold mb-4">Step 5: Contact Info</h3>
+                    <label class="block text-gray-300">Email Address</label>
+                    <input type="email" id="input-email" class="form-input" placeholder="your.email@example.com" required>
+                    <label class="block text-gray-300 mt-4">Phone Number (Optional)</label>
+                    <input type="tel" id="input-phone" class="form-input" placeholder="(123) 456-7890">
+                </div>
+
+                <div class="mt-8 flex justify-between">
+                    <button type="button" id="prev-btn" class="game-button bg-gray-600 hover:bg-gray-700">Previous</button>
+                    <button type="button" id="next-btn" class="game-button">Next</button>
+                    <button type="submit" id="submit-btn" class="game-button hidden">Generate Portfolio</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <nav id="navbar" class="py-4">
+        <div class="container mx-auto px-6 flex justify-between items-center">
+            <a href="#home" id="nav-name" class="text-2xl font-bold text-white">Your Name</a>
+            <div class="hidden md:flex space-x-8">
+                <a href="#about" class="text-gray-300 hover:text-white transition">About</a>
+                <a href="#skills" class="text-gray-300 hover:text-white transition">Skills</a>
+                <a href="#projects" class="text-gray-300 hover:text-white transition">Projects</a>
+                <a href="#game" class="text-gray-300 hover:text-white transition">Play a Game</a>
+                <a href="#contact" class="text-gray-300 hover:text-white transition">Contact</a>
+            </div>
+            <button id="mobile-menu-button" class="md:hidden text-white">
+                <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16m-7 6h7"></path></svg>
+            </button>
+        </div>
+        <div id="mobile-menu" class="hidden md:hidden px-6 pt-2 pb-4">
+            <a href="#about" class="block py-2 text-gray-300 hover:text-white">About</a>
+            <a href="#skills" class="block py-2 text-gray-300 hover:text-white">Skills</a>
+            <a href="#projects" class="block py-2 text-gray-300 hover:text-white">Projects</a>
+            <a href="#game" class="block py-2 text-gray-300 hover:text-white">Play a Game</a>
+            <a href="#contact" class="block py-2 text-gray-300 hover:text-white">Contact</a>
+        </div>
+    </nav>
+
+    <section id="home" class="h-screen flex items-center justify-center text-center bg-cover bg-center" style="background-image: url('https://placehold.co/1920x1080/111827/1f2937?text=');">
+        <div class="absolute inset-0 bg-black opacity-50"></div>
+        <div class="relative z-10 px-4">
+            <h1 id="hero-name" class="text-5xl md:text-7xl font-extrabold text-white leading-tight">
+                Hi, I'm [Your Name]
+            </h1>
+            <p id="hero-title" class="text-xl md:text-2xl mt-4 text-gray-300 max-w-3xl mx-auto">
+                [Your Title] Turning Ideas into Interactive Realities.
+            </p>
+            <a href="#projects" class="mt-8 inline-block bg-indigo-600 text-white font-bold py-3 px-8 rounded-full text-lg hover:bg-indigo-700 transition-transform transform hover:scale-105">
+                View My Work
+            </a>
+        </div>
+    </section>
+
+    <section id="about" class="py-24">
+        <div class="container mx-auto px-6">
+            <h2 class="section-header">About Me</h2>
+            <p class="section-subheader">A little bit about my journey, passions, and what drives me to create.</p>
+            <div class="flex flex-col md:flex-row items-center gap-12">
+                <div class="md:w-1/3">
+                    <img src="https://placehold.co/400x400/1f2937/e5e7eb?text=Avatar" id="about-avatar" alt="User Avatar" class="rounded-full shadow-2xl mx-auto border-4 border-indigo-500">
+                </div>
+                <div class="md:w-2/3 text-lg text-gray-300 space-y-4">
+                    <p id="about-bio">Hello! I'm a passionate developer with a love for building beautiful, functional, and user-centric web applications. My journey into the world of code started with a simple "Hello, World!" and has since evolved into a full-blown passion for solving complex problems and creating seamless digital experiences.</p>
+                    <p id="about-college">I'm a lifelong learner, constantly exploring new technologies and frameworks to stay at the forefront of web development. I attended [Your College] where I honed my foundational skills.</p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <section id="skills" class="py-24 bg-gray-800">
+        <div class="container mx-auto px-6">
+            <h2 class="section-header">My Tech Stack</h2>
+            <p class="section-subheader">The tools and technologies I use to build modern web applications. You can also shoot them in the game below!</p>
+            <div id="skills-grid" class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-8 text-center">
+                <div class="glass-card p-6 flex flex-col items-center justify-center">
+                    <h3 class="text-xl font-semibold">Enter your skills...</h3>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <section id="projects" class="py-24">
+        <div class="container mx-auto px-6">
+            <h2 class="section-header">Featured Projects</h2>
+            <p class="section-subheader">A selection of my work. Each project showcases my ability to solve problems and deliver high-quality results.</p>
+            <div id="projects-grid" class="grid md:grid-cols-2 lg:grid-cols-3 gap-8">
+                <div class="glass-card overflow-hidden">
+                    <img src="https://placehold.co/600x400/1f2937/4f46e5?text=Project" alt="Project" class="w-full h-56 object-cover">
+                    <div class="p-6">
+                        <h3 class="text-2xl font-bold mb-2">Your Project Title</h3>
+                        <p class="text-gray-400 mb-4">Your project description will appear here after you complete the setup wizard.</p>
+                        <a href="#" class="text-indigo-400 hover:text-indigo-300 font-semibold">View Project &rarr;</a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <section id="game" class="py-24 bg-gray-800">
+        <div class="container mx-auto px-6">
+            <h2 class="section-header">Skill Shooter</h2>
+            <p class="section-subheader">Take a break and play a game! Use the arrow keys to move, spacebar to shoot. Destroy my skills (asteroids) and see if you can beat the final boss.</p>
+            <div id="game-container">
+                <canvas id="game-canvas"></canvas>
+                <div id="game-ui">
+                    <div class="flex justify-between">
+                        <div id="score-el">Score: 0</div>
+                        <div id="level-el">Level: 1</div>
+                    </div>
+                    <div id="lives-el" class="text-right">Lives: 3</div>
+                </div>
+                <div id="game-start-screen">
+                    <h2 class="text-4xl font-bold mb-4">Welcome to Skill Shooter!</h2>
+                    <p class="text-lg mb-6 max-w-md">Use [Arrow Keys] or [W,A,S,D] to move.<br>Use [Spacebar] to shoot.<br>Destroy the asteroids to advance.</p>
+                    <button id="start-game-btn" class="game-button">Start Game</button>
+                </div>
+                <div id="game-over-screen" class="hidden">
+                    <h2 class="text-4xl font-bold mb-2">Game Over</h2>
+                    <p class="text-2xl mb-4">Final Score: <span id="final-score">0</span></p>
+                    <button id="restart-game-btn" class="game-button">Play Again</button>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <section id="contact" class="py-24">
+        <div class="container mx-auto px-6">
+            <h2 class="section-header">Get In Touch</h2>
+            <p class="section-subheader">Have a project in mind or just want to say hello? My inbox is always open. I'll get back to you as soon as possible!</p>
+            <div class="max-w-3xl mx-auto glass-card p-8">
+                <form action="#" method="POST">
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        <div class="mb-4">
+                            <label for="name" class="block text-gray-300 mb-2">Name</label>
+                            <input type="text" id="contact-name" name="name" class="w-full p-3 bg-gray-700 border border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 text-white">
+                        </div>
+                        <div class="mb-4">
+                            <label for="email" class="block text-gray-300 mb-2">Email</label>
+                            <input type="email" id="contact-email" name="email" class="w-full p-3 bg-gray-700 border border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 text-white">
+                        </div>
+                    </div>
+                    <div class="mb-4">
+                        <label for="message" class="block text-gray-300 mb-2">Message</label>
+                        <textarea id="contact-message" name="message" rows="5" class="w-full p-3 bg-gray-700 border border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 text-white"></textarea>
+                    </div>
+                    <div class="text-center">
+                        <button type="submit" class="w-full md:w-auto btn-primary text-white font-bold py-3 px-8 rounded-full text-lg hover:bg-indigo-700 transition-transform transform hover:scale-105">
+                            Send Message
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </section>
+
+    <footer class="bg-gray-800 py-8">
+        <div class="container mx-auto px-6 text-center text-gray-400">
+            <p id="footer-text">&copy; 2025 Your Name. All Rights Reserved.</p>
+            <p class="mt-2">Built with passion, caffeine, and a little bit of magic.</p>
+        </div>
+    </footer>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            const modalBackdrop = document.getElementById('setup-modal-backdrop');
+            const setupForm = document.getElementById('portfolio-setup-form');
+            const prevBtn = document.getElementById('prev-btn');
+            const nextBtn = document.getElementById('next-btn');
+            const submitBtn = document.getElementById('submit-btn');
+            const progressBar = document.getElementById('progress-bar');
+            const steps = document.querySelectorAll('.modal-step');
+            let currentStep = 1;
+            const totalSteps = steps.length;
+
+            function showModal() {
+                modalBackdrop.classList.add('visible');
+                updateModalNav();
+            }
+
+            function updateModalNav() {
+                steps.forEach(step => step.classList.remove('active'));
+                document.getElementById(`step-${currentStep}`).classList.add('active');
+
+                progressBar.style.width = `${((currentStep - 1) / (totalSteps - 1)) * 100}%`;
+
+                if (currentStep === 1) {
+                    prevBtn.classList.add('hidden');
+                } else {
+                    prevBtn.classList.remove('hidden');
+                }
+
+                if (currentStep === totalSteps) {
+                    nextBtn.classList.add('hidden');
+                    submitBtn.classList.remove('hidden');
+                } else {
+                    nextBtn.classList.remove('hidden');
+                    submitBtn.classList.add('hidden');
+                }
+            }
+            
+            prevBtn.addEventListener('click', () => {
+                if (currentStep > 1) {
+                    currentStep--;
+                    updateModalNav();
+                }
+            });
+
+            nextBtn.addEventListener('click', () => {
+                if (currentStep < totalSteps) {
+                    currentStep++;
+                    updateModalNav();
+                }
+            });
+            
+            setupForm.addEventListener('submit', (e) => {
+                e.preventDefault();
+                const formData = {
+                    name: document.getElementById('input-name').value,
+                    title: document.getElementById('input-title').value,
+                    bio: document.getElementById('input-bio').value,
+                    college: document.getElementById('input-college').value,
+                    skills: document.getElementById('input-skills').value.split(',').map(s => s.trim()).filter(s => s),
+                    projectTitle: document.getElementById('input-project-title').value,
+                    projectDesc: document.getElementById('input-project-desc').value,
+                    email: document.getElementById('input-email').value,
+                    phone: document.getElementById('input-phone').value,
+                };
+                populatePortfolio(formData);
+                modalBackdrop.classList.remove('visible');
+            });
+
+            function populatePortfolio(data) {
+                document.title = `${data.name} - Interactive Portfolio`;
+                document.getElementById('nav-name').textContent = data.name;
+                document.getElementById('hero-name').textContent = `Hi, I'm ${data.name}`;
+                document.getElementById('hero-title').textContent = `${data.title} Turning Ideas into Interactive Realities.`;
+                document.getElementById('about-bio').textContent = data.bio || "This is where your bio would go. Fill it out in the setup wizard!";
+                document.getElementById('about-college').textContent = data.college ? `I attended ${data.college} where I honed my foundational skills.` : "A lifelong learner, constantly exploring new technologies.";
+                document.getElementById('contact-email').value = data.email;
+                document.getElementById('footer-text').innerHTML = `&copy; ${new Date().getFullYear()} ${data.name}. All Rights Reserved.`;
+
+                const skillsGrid = document.getElementById('skills-grid');
+                skillsGrid.innerHTML = '';
+                if(data.skills.length > 0) {
+                    data.skills.forEach(skill => {
+                        skillsGrid.innerHTML += `
+                            <div class="glass-card p-6 flex flex-col items-center justify-center">
+                                <h3 class="text-xl font-semibold">${skill}</h3>
+                            </div>
+                        `;
+                    });
+                    SKILLS.length = 0;
+                    SKILLS.push(...data.skills);
+                } else {
+                    skillsGrid.innerHTML = `<p>No skills provided. Please complete the setup.</p>`;
+                }
+                
+                const projectsGrid = document.getElementById('projects-grid');
+                projectsGrid.innerHTML = '';
+                if(data.projectTitle) {
+                    projectsGrid.innerHTML = `
+                        <div class="glass-card overflow-hidden">
+                            <img src="https://placehold.co/600x400/1f2937/4f46e5?text=${encodeURIComponent(data.projectTitle)}" alt="${data.projectTitle}" class="w-full h-56 object-cover">
+                            <div class="p-6">
+                                <h3 class="text-2xl font-bold mb-2">${data.projectTitle}</h3>
+                                <p class="text-gray-400 mb-4">${data.projectDesc}</p>
+                                <a href="#" class="text-indigo-400 hover:text-indigo-300 font-semibold">View Project &rarr;</a>
+                            </div>
+                        </div>
+                    `;
+                }
+            }
+            
+            showModal();
+
+            const navbar = document.getElementById('navbar');
+            const mobileMenuButton = document.getElementById('mobile-menu-button');
+            const mobileMenu = document.getElementById('mobile-menu');
+
+            window.addEventListener('scroll', () => {
+                if (window.scrollY > 50) {
+                    navbar.classList.add('scrolled');
+                } else {
+                    navbar.classList.remove('scrolled');
+                }
+            });
+
+            mobileMenuButton.addEventListener('click', () => {
+                mobileMenu.classList.toggle('hidden');
+            });
+
+            const canvas = document.getElementById('game-canvas');
+            const ctx = canvas.getContext('2d');
+            const gameContainer = document.getElementById('game-container');
+            
+            const scoreEl = document.getElementById('score-el');
+            const levelEl = document.getElementById('level-el');
+            const livesEl = document.getElementById('lives-el');
+            const startScreen = document.getElementById('game-start-screen');
+            const gameOverScreen = document.getElementById('game-over-screen');
+            const startGameBtn = document.getElementById('start-game-btn');
+            const restartGameBtn = document.getElementById('restart-game-btn');
+            const finalScoreEl = document.getElementById('final-score');
+
+            let animationId;
+            let player;
+            let projectiles = [];
+            let asteroids = [];
+            let particles = [];
+            let powerUps = [];
+            let keys = {
+                ArrowUp: { pressed: false }, ArrowDown: { pressed: false }, ArrowLeft: { pressed: false }, ArrowRight: { pressed: false },
+                w: { pressed: false }, s: { pressed: false }, a: { pressed: false }, d: { pressed: false },
+                ' ': { pressed: false, released: true }
+            };
+            let score = 0;
+            let lives = 3;
+            let level = 1;
+            let isGameOver = false;
+            let gameStarted = false;
+
+            const SKILLS = ['Edit Me!'];
+
+            class GameObject {
+                constructor({ position, velocity, radius }) {
+                    this.position = position;
+                    this.velocity = velocity;
+                    this.radius = radius;
+                }
+                draw() { /* To be implemented by child classes */ }
+                update() {
+                    this.draw();
+                    this.position.x += this.velocity.x;
+                    this.position.y += this.velocity.y;
+                }
+            }
+
+            class Player extends GameObject {
+                constructor() {
+                    super({
+                        position: { x: canvas.width / 2, y: canvas.height / 2 },
+                        velocity: { x: 0, y: 0 },
+                        radius: 15
+                    });
+                    this.rotation = 0;
+                    this.friction = 0.97;
+                    this.acceleration = 0.1;
+                    this.rotationSpeed = 0.05;
+                    this.isThrusting = false;
+                    this.invincible = false;
+                    this.invincibilityDuration = 2000;
+                }
+
+                draw() {
+                    ctx.save();
+                    ctx.translate(this.position.x, this.position.y);
+                    ctx.rotate(this.rotation);
+                    ctx.beginPath();
+                    ctx.moveTo(0, -this.radius);
+                    ctx.lineTo(10, 10);
+                    ctx.lineTo(-10, 10);
+                    ctx.closePath();
+                    ctx.strokeStyle = this.invincible ? 'yellow' : 'white';
+                    ctx.lineWidth = 2;
+                    ctx.stroke();
+                    if (this.isThrusting) {
+                        ctx.beginPath();
+                        ctx.moveTo(0, 10);
+                        ctx.lineTo(5, 15 + Math.random() * 5);
+                        ctx.lineTo(-5, 15 + Math.random() * 5);
+                        ctx.closePath();
+                        ctx.fillStyle = 'orange';
+                        ctx.fill();
+                    }
+                    ctx.restore();
+                }
+
+                update() {
+                    this.isThrusting = keys.ArrowUp.pressed || keys.w.pressed;
+                    if (this.isThrusting) {
+                        this.velocity.x += Math.sin(this.rotation) * this.acceleration;
+                        this.velocity.y -= Math.cos(this.rotation) * this.acceleration;
+                    }
+                    if (keys.ArrowLeft.pressed || keys.a.pressed) this.rotation -= this.rotationSpeed;
+                    if (keys.ArrowRight.pressed || keys.d.pressed) this.rotation += this.rotationSpeed;
+                    this.velocity.x *= this.friction;
+                    this.velocity.y *= this.friction;
+                    if (this.position.x + this.radius < 0) this.position.x = canvas.width + this.radius;
+                    else if (this.position.x - this.radius > canvas.width) this.position.x = -this.radius;
+                    if (this.position.y + this.radius < 0) this.position.y = canvas.height + this.radius;
+                    else if (this.position.y - this.radius > canvas.height) this.position.y = -this.radius;
+                    super.update();
+                }
+
+                shoot() {
+                    if (keys[' '].pressed && keys[' '].released) {
+                        keys[' '].released = false;
+                        projectiles.push(new Projectile({
+                            position: {
+                                x: this.position.x + Math.sin(this.rotation) * 20,
+                                y: this.position.y - Math.cos(this.rotation) * 20
+                            },
+                            velocity: { x: Math.sin(this.rotation) * 8, y: -Math.cos(this.rotation) * 8 }
+                        }));
+                        setTimeout(() => { keys[' '].released = true; }, 200);
+                    }
+                }
+                
+                makeInvincible() {
+                    this.invincible = true;
+                    setTimeout(() => { this.invincible = false; }, this.invincibilityDuration);
+                }
+            }
+
+            class Projectile extends GameObject {
+                constructor({ position, velocity }) {
+                    super({ position, velocity, radius: 3 });
+                }
+                draw() {
+                    ctx.beginPath();
+                    ctx.arc(this.position.x, this.position.y, this.radius, 0, Math.PI * 2);
+                    ctx.fillStyle = 'white';
+                    ctx.fill();
+                }
+            }
+            
+            class Asteroid extends GameObject {
+                constructor({ position, velocity, radius, skill }) {
+                    super({ position, velocity, radius });
+                    this.skill = skill || SKILLS[Math.floor(Math.random() * SKILLS.length)] || 'Skill';
+                    this.color = `hsl(${Math.random() * 360}, 50%, 50%)`;
+                }
+                draw() {
+                    ctx.beginPath();
+                    ctx.arc(this.position.x, this.position.y, this.radius, 0, Math.PI * 2);
+                    ctx.strokeStyle = this.color;
+                    ctx.lineWidth = 2;
+                    ctx.stroke();
+                    ctx.fillStyle = 'white';
+                    ctx.font = `${this.radius / 2}px Poppins`;
+                    ctx.textAlign = 'center';
+                    ctx.textBaseline = 'middle';
+                    ctx.fillText(this.skill, this.position.x, this.position.y);
+                }
+            }
+            
+            class Particle extends GameObject {
+                constructor({ position, velocity, radius, color, fades }) {
+                    super({ position, velocity, radius });
+                    this.color = color;
+                    this.opacity = 1;
+                    this.fades = fades;
+                }
+                draw() {
+                    ctx.save();
+                    ctx.globalAlpha = this.opacity;
+                    ctx.beginPath();
+                    ctx.arc(this.position.x, this.position.y, this.radius, 0, Math.PI * 2);
+                    ctx.fillStyle = this.color;
+                    ctx.fill();
+                    ctx.restore();
+                }
+                update() {
+                    if (this.fades) this.opacity -= 0.02;
+                    super.update();
+                }
+            }
+
+            function initGame() {
+                score = 0; lives = 3; level = 1; isGameOver = false; gameStarted = true;
+                updateUI();
+                player = new Player();
+                projectiles = []; asteroids = []; particles = []; powerUps = [];
+                spawnAsteroids();
+                gameOverScreen.classList.add('hidden');
+                if (animationId) cancelAnimationFrame(animationId);
+                animate();
+            }
+
+            function spawnAsteroids() {
+                asteroids = [];
+                const count = level * 2 + 3;
+                for (let i = 0; i < count; i++) {
+                    let x, y;
+                    if (Math.random() < 0.5) {
+                        x = Math.random() < 0.5 ? 0 - 50 : canvas.width + 50;
+                        y = Math.random() * canvas.height;
+                    } else {
+                        x = Math.random() * canvas.width;
+                        y = Math.random() < 0.5 ? 0 - 50 : canvas.height + 50;
+                    }
+                    const radius = Math.random() * 20 + 20;
+                    asteroids.push(new Asteroid({
+                        position: { x, y },
+                        velocity: { x: (Math.random() - 0.5) * (1 + level * 0.2), y: (Math.random() - 0.5) * (1 + level * 0.2) },
+                        radius: radius
+                    }));
+                }
+            }
+
+            function createExplosion(object) {
+                for (let i = 0; i < 20; i++) {
+                    particles.push(new Particle({
+                        position: { x: object.position.x, y: object.position.y },
+                        velocity: { x: (Math.random() - 0.5) * 4, y: (Math.random() - 0.5) * 4 },
+                        radius: Math.random() * 3,
+                        color: object.color || 'white',
+                        fades: true
+                    }));
+                }
+            }
+            
+            function updateUI() {
+                scoreEl.innerText = `Score: ${score}`;
+                levelEl.innerText = `Level: ${level}`;
+                livesEl.innerText = `Lives: ${lives}`;
+            }
+
+            function nextLevel() {
+                level++;
+                updateUI();
+                say(`Level ${level}`, 2000);
+                spawnAsteroids();
+                player.makeInvincible();
+            }
+            
+            function say(text, duration) {
+                const messageEl = document.createElement('div');
+                messageEl.textContent = text;
+                Object.assign(messageEl.style, {
+                    position: 'absolute', top: '40%', left: '50%', transform: 'translate(-50%, -50%)',
+                    color: 'white', fontSize: '3rem', fontWeight: 'bold', textShadow: '2px 2px 4px black',
+                    opacity: '1', transition: 'opacity 1s ease-out'
+                });
+                gameContainer.appendChild(messageEl);
+                setTimeout(() => {
+                    messageEl.style.opacity = '0';
+                    setTimeout(() => messageEl.remove(), 1000);
+                }, duration);
+            }
+
+            function gameOver() {
+                isGameOver = true;
+                finalScoreEl.innerText = score;
+                gameOverScreen.classList.remove('hidden');
+                cancelAnimationFrame(animationId);
+            }
+
+            function handleCollisions() {
+                for (let i = projectiles.length - 1; i >= 0; i--) {
+                    for (let j = asteroids.length - 1; j >= 0; j--) {
+                        const p = projectiles[i];
+                        const a = asteroids[j];
+                        if (!p || !a) continue;
+                        const dist = Math.hypot(p.position.x - a.position.x, p.position.y - a.position.y);
+                        if (dist - a.radius - p.radius < 1) {
+                            createExplosion(a);
+                            score += 100;
+                            updateUI();
+                            if (a.radius > 25) {
+                                for(let k=0; k<2; k++) {
+                                    asteroids.push(new Asteroid({
+                                        position: { x: a.position.x, y: a.position.y },
+                                        velocity: { x: (Math.random() - 0.5) * 2, y: (Math.random() - 0.5) * 2 },
+                                        radius: a.radius / 2
+                                    }));
+                                }
+                            }
+                            projectiles.splice(i, 1);
+                            asteroids.splice(j, 1);
+                            break;
+                        }
+                    }
+                }
+
+                if (!player.invincible) {
+                    for (let i = asteroids.length - 1; i >= 0; i--) {
+                        const a = asteroids[i];
+                        const dist = Math.hypot(player.position.x - a.position.x, player.position.y - a.position.y);
+                        if (dist - player.radius - a.radius < 1) {
+                            createExplosion(player);
+                            lives--;
+                            updateUI();
+                            if (lives <= 0) gameOver();
+                            else {
+                                player.position = { x: canvas.width / 2, y: canvas.height / 2 };
+                                player.velocity = { x: 0, y: 0 };
+                                player.makeInvincible();
+                                asteroids.splice(i, 1);
+                            }
+                        }
+                    }
+                }
+            }
+
+            function animate() {
+                if (isGameOver) return;
+                animationId = requestAnimationFrame(animate);
+                ctx.fillStyle = 'rgba(0, 0, 0, 0.2)';
+                ctx.fillRect(0, 0, canvas.width, canvas.height);
+                player.update();
+                player.shoot();
+                for (let i = projectiles.length - 1; i >= 0; i--) {
+                    const p = projectiles[i];
+                    p.update();
+                    if (p.position.x < 0 || p.position.x > canvas.width || p.position.y < 0 || p.position.y > canvas.height) {
+                        projectiles.splice(i, 1);
+                    }
+                }
+                asteroids.forEach(a => a.update());
+                for (let i = particles.length - 1; i >= 0; i--) {
+                    if (particles[i].opacity <= 0) particles.splice(i, 1);
+                    else particles[i].update();
+                }
+                handleCollisions();
+                if (asteroids.length === 0 && !isGameOver) nextLevel();
+            }
+            
+            window.addEventListener('keydown', (e) => { if (keys.hasOwnProperty(e.key)) keys[e.key].pressed = true; });
+            window.addEventListener('keyup', (e) => { if (keys.hasOwnProperty(e.key)) keys[e.key].pressed = false; });
+            startGameBtn.addEventListener('click', () => { startScreen.classList.add('hidden'); initGame(); });
+            restartGameBtn.addEventListener('click', initGame);
+            
+            function resizeCanvas() {
+                const { width } = gameContainer.getBoundingClientRect();
+                canvas.width = width;
+                canvas.height = width * (9 / 16);
+                if (gameStarted && !isGameOver) {
+                    player.position = { x: canvas.width / 2, y: canvas.height / 2 };
+                }
+            }
+            window.addEventListener('resize', resizeCanvas);
+            resizeCanvas();
+        });
+    </script>
+</body>
+</html>
